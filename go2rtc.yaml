@@ -1,0 +1,11 @@
+api:
+  listen: "127.0.0.1:1984"
+
+webrtc:
+  listen: ":8555"
+
+streams:
+  tapo_hd:
+    - rtsp://adhamch:jas.luc%40A1%21%3F@192.168.1.30:554/stream1
+  tapo_sd:
+    - rtsp://adhamch:jas.luc%40A1%21%3F@192.168.1.30:554/stream2

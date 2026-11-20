@@ -1,0 +1,21 @@
+{
+  "camera": {
+    "ip": "192.168.1.100",
+    "username": "your_tapo_username",
+    "password": "YOUR_TAPO_PASSWORD",
+    "rtsp_port": 554,
+    "stream_hd": "stream1",
+    "stream_sd": "stream2"
+  },
+  "security": {
+    "pin": "0000",
+    "pin_set": false,
+    "session_timeout_minutes": 1440,
+    "max_failed_attempts": 5,
+    "lockout_minutes": 5
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 5000
+  }
+}
