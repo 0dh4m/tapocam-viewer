@@ -93,7 +93,7 @@ Copy `config.json.example` to `config.json` and enter your camera credentials:
 ### 3. Launch the Station
 Run the automated launcher:
 ```cmd
-start.bat
+scripts/start.bat
 ```
 Or start manually:
 ```bash
