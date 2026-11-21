@@ -37,3 +37,8 @@ Desktop.ini
 
 # Ignore real camera credentials
 config.json
+
+# Local test scripts and credentials
+tools/
+config.json
+*.log
