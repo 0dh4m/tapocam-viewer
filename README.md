@@ -1,4 +1,4 @@
-# 📹 TapoCam PTZ Viewer & Real-Time WebRTC Security Deck
+# 📹 Tapo C510W Private Security Viewer
 
 <div align="center">
 
@@ -6,24 +6,32 @@
 [![Camera](https://img.shields.io/badge/Camera-TP--Link%20Tapo%20C510W-7928CA?style=for-the-badge)](https://github.com/0dh4m/tapocam-viewer)
 [![Streaming](https://img.shields.io/badge/Stream-WebRTC%20%7C%20RTSP%20%7C%20go2rtc-FF0080?style=for-the-badge)](https://github.com/0dh4m/tapocam-viewer)
 [![Protocol](https://img.shields.io/badge/Protocol-ONVIF%20WSSE%20PTZ-success?style=for-the-badge)](https://github.com/0dh4m/tapocam-viewer)
+[![License](https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge)](LICENSE)
 
-**A high-performance surveillance and camera control station engineered for the TP-Link Tapo C510W Outdoor Pan/Tilt Security Camera.**  
-Combines sub-second WebRTC video streaming with native ONVIF WSSE hardware PTZ control, virtual joystick, snapshot capture, and patrol presets.
+**A local web dashboard for the TP-Link Tapo C510W outdoor pan/tilt camera.**
+Low-latency WebRTC video through `go2rtc`, ONVIF WSSE PTZ control, snapshots, audio, a PIN lock and a privacy shutter.
 
-[Key Features](#-key-features) • [Architecture](#-architecture) • [Controls](#-controls--shortcuts) • [Quickstart](#-quickstart-guide)
+[Features](#-features) • [Architecture](#-architecture) • [Setup](#-setup) • [Controls](#-controls) • [Security](#-security-notes)
 
 </div>
 
+> **Disclaimer:** this is an independent project, not affiliated with or endorsed by TP-Link. Tested with the Tapo C510W; other ONVIF Profile S cameras may work but are not guaranteed.
+
 ---
 
-## 🌟 Key Features
+## ✨ Features
 
-- ⚡ **Sub-Second Low-Latency WebRTC Stream**: Powered by an embedded `go2rtc` media pipeline, reducing RTSP video stream lag from several seconds down to under **150ms**.
-- 🕹️ **Interactive Hardware PTZ Joystick**: Responsive 360-degree virtual joystick supporting fluid continuous Pan, Tilt, and Zoom navigation.
-- 🔐 **ONVIF WSSE Secure Authentication**: Custom SOAP XML command dispatcher with UsernameToken, PasswordDigest, Nonce, and Created timestamps.
-- 🎯 **Presets & Fast Patrol**: Store and instantly recall target camera coordinates (Front Gate, Driveway, Backyard, Entrance).
-- 📸 **Live High-Res Snapshots**: Capture timestamped Full-HD frames directly from the live feed and save to disk with one click.
-- ⌨️ **Keyboard Navigation**: Steer the camera effortlessly using `WASD` or Arrow keys with dynamic velocity scaling.
+- 🎥 **Two live streams** — `stream1` (2K HD) and `stream2` (SD), served as WebRTC through `go2rtc`.
+- 🕹️ **ONVIF PTZ D-pad** — pan and tilt with adjustable step size (Fine / Normal / Fast).
+- 🔐 **PIN lock** — 4+ digit PIN, configurable failed-attempt limit and lockout window.
+- 🛡️ **Privacy mode** — sends the ONVIF privacy command to shutter the camera, with a full-screen overlay (`C` key).
+- 📸 **Instant snapshot** — downloads a JPEG frame from the live stream.
+- 🔊 **Camera audio toggle**, fullscreen mode and a live connection/status panel.
+- ⚙️ **In-browser setup** — camera IP, credentials, RTSP ports and stream names can be saved from the settings panel.
+- 🧪 **Camera connectivity test** before saving.
+- 🏠 **LAN-first** — runs on your machine and is intended for local/VPN access.
+
+> **Not implemented:** optical/digital zoom, preset positions, patrol routes, motion tracking or cloud recording. The C510W has no optical zoom, and this project does not add one.
 
 ---
 
@@ -31,83 +39,182 @@ Combines sub-second WebRTC video streaming with native ONVIF WSSE hardware PTZ c
 
 ```text
 ┌─────────────────────────────────┐
-│     TP-Link Tapo C510W Cam      │
+│     TP-Link Tapo C510W camera   │
 └────────────────┬────────────────┘
                  │
        ┌─────────┴─────────┐
        ▼                   ▼
 ┌──────────────┐    ┌──────────────┐
-│  RTSP Feed   │    │  ONVIF SOAP  │
-│  (Port 554)  │    │ (Port 2020)  │
+│  RTSP feed   │    │  ONVIF SOAP  │
+│  port 554    │    │  port 2020   │
 └──────┬───────┘    └──────┬───────┘
        │                   │
        ▼                   ▼
 ┌──────────────┐    ┌──────────────┐
-│ go2rtc Core  │    │ Flask PTZ Svc│
-│ WebRTC Proxy │    │ ONVIF WSSE   │
+│ go2rtc       │    │ aiohttp PTZ  │
+│ WebRTC proxy │    │ WSSE service │
 └──────┬───────┘    └──────┬───────┘
        │                   │
        └─────────┬─────────┘
                  ▼
 ┌─────────────────────────────────┐
-│     Modern Glassmorphic UI      │
-│   • Sub-150ms WebRTC Video Feed │
-│   • Responsive Virtual Joystick │
-│   • Keyboard Hotkeys (WASD)     │
+│  Browser dashboard (static/)    │
+│  • WebRTC player                │
+│  • PTZ D-pad + keyboard arrows  │
+│  • PIN lock / privacy mode      │
+│  • Snapshot + audio + fullscreen│
 └─────────────────────────────────┘
 ```
 
----
-
-## 🕹️ Controls & Shortcuts
-
-| Action | Control / Key | Description |
-| :--- | :--- | :--- |
-| **Pan Left / Right** | `A` / `D` or `←` / `→` | Rotates the camera horizontally |
-| **Tilt Up / Down** | `W` / `S` or `↑` / `↓` | Adjusts camera vertical elevation |
-| **Zoom In / Out** | `+` / `-` | Hardware optical / digital zoom steps |
-| **Snapshot** | `Space` or Click `📷` | Saves high-resolution JPEG capture |
-| **Home Position** | `H` | Resets camera to primary patrol coordinate |
+- **Backend:** Python 3 + `aiohttp` (`server.py`), ONVIF SOAP client (`ptz.py`).
+- **Media:** [`go2rtc`](https://github.com/AlexxIT/go2rtc) converts RTSP to WebRTC and serves the player.
+- **Frontend:** vanilla HTML/CSS/JS in `static/`.
 
 ---
 
-## 🚀 Quickstart Guide
+## 🚀 Setup
 
 ### 1. Requirements
-- Python 3.10+
-- TP-Link Tapo C510W (or any ONVIF Profile S compatible camera) connected to your local network.
-- Camera Account created in the Tapo App (*Settings -> Advanced Settings -> Camera Account*).
 
-### 2. Configuration
-Copy `config.json.example` to `config.json` and enter your camera credentials:
+- Windows 10/11 (the launcher and `go2rtc.exe` path are Windows-oriented).
+- Python **3.10+**.
+- A Tapo C510W (or compatible ONVIF camera) on the same network.
+- A **Camera Account** created in the Tapo app: *Settings → Advanced Settings → Camera Account*.
+
+### 2. Install Python dependencies
+
+```bash
+git clone https://github.com/0dh4m/tapocam-viewer.git
+cd tapocam-viewer
+python -m pip install -r requirements.txt
+```
+
+### 3. Add `go2rtc`
+
+Download the Windows binary from the [go2rtc releases page](https://github.com/AlexxIT/go2rtc/releases) and place it in the repository root as:
+
+```text
+tapocam-viewer/
+└── go2rtc.exe
+```
+
+The server generates `go2rtc.yaml` at startup from your camera settings. If `go2rtc.exe` is missing, the dashboard still starts but the video stream will not.
+
+### 4. Configure the camera
+
+Copy the example and edit it:
+
+```bash
+copy config.json.example config.json
+```
+
 ```json
 {
-  "camera_ip": "192.168.1.100",
-  "camera_port": 2020,
-  "rtsp_port": 554,
-  "username": "your_tapo_username",
-  "password": "your_tapo_password"
+  "camera": {
+    "ip": "192.168.1.100",
+    "username": "your_tapo_username",
+    "password": "YOUR_TAPO_PASSWORD",
+    "rtsp_port": 554,
+    "stream_hd": "stream1",
+    "stream_sd": "stream2"
+  },
+  "security": {
+    "pin": "0000",
+    "pin_set": false,
+    "session_timeout_minutes": 1440,
+    "max_failed_attempts": 5,
+    "lockout_minutes": 5
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 5000
+  }
 }
 ```
 
-### 3. Launch the Station
-Run the automated launcher:
+You can also change the camera settings from the dashboard after the first launch.
+
+### 5. Start the server
+
 ```cmd
-scripts/start.bat
+scripts\start.bat
 ```
-Or start manually:
+
+Or manually:
+
 ```bash
 python server.py
 ```
-Open `http://localhost:8080` in your web browser.
+
+Open **http://localhost:5000**. On first launch, set your own PIN in the dashboard.
 
 ---
 
-## 👤 Author & Copyright
+## 🕹️ Controls
 
-**Adham Cherkaoui Eddeqaqi (0dh4m)**  
-- 🌐 Portfolio: [0dh4m.github.io/portfolio](https://0dh4m.github.io/portfolio)
+| Action | Control |
+| :--- | :--- |
+| Pan / tilt | On-screen D-pad or **arrow keys** |
+| PTZ step size | Fine / Normal / Fast buttons in the PTZ panel |
+| Privacy shutter | `C` key or the **Privacy** button |
+| Snapshot | Camera button in the video toolbar |
+| Audio on/off | Speaker button |
+| Fullscreen | Fullscreen button |
+| Lock dashboard | **Lock** button |
+
+---
+
+## 📂 Project Structure
+
+```text
+tapocam-viewer/
+├── server.py              # aiohttp app, auth, config, go2rtc and WebRTC proxy
+├── ptz.py                 # ONVIF WSSE SOAP client (pan/tilt, privacy, status)
+├── config.json.example    # camera, security and server settings
+├── requirements.txt
+├── go2rtc.yaml            # generated at runtime (not committed)
+├── scripts/start.bat      # Windows launcher
+└── static/
+    ├── index.html         # dashboard
+    ├── app.js             # UI, PTZ, PIN lock, privacy, snapshots
+    ├── style.css
+    ├── video-rtc.js
+    └── video-stream.js
+```
+
+---
+
+## 🔐 Security Notes
+
+- `config.json` contains the camera password. It is **git-ignored** — never commit it.
+- `go2rtc.yaml` is generated from `config.json` and is also **git-ignored**.
+- Change the default PIN on first launch. The PIN protects the dashboard, not the camera stream itself.
+- The server binds to `0.0.0.0` so other devices on your LAN can use it. Do **not** expose port `5000` directly to the internet; use a VPN (WireGuard/Tailscale) or an authenticated reverse proxy.
+- Privacy mode depends on the camera accepting the ONVIF privacy command.
+- Rotate the camera password if a config file was ever committed or shared.
+
+---
+
+## ⚠️ Known Limitations
+
+- The Tapo C510W has **no optical zoom**; the dashboard intentionally exposes pan/tilt only.
+- Presets, patrol routes and motion tracking are not implemented.
+- WebRTC may need UDP ports open on the local network; `go2rtc` handles negotiation.
+- Only tested on Windows with the C510W. ONVIF implementations vary by firmware.
+
+---
+
+## 👤 Author
+
+**Adham Cherkaoui Eddeqaqi (0dh4m)**
+- 🌐 Portfolio: [0dh4m.github.io](https://0dh4m.github.io/)
 - 🐙 GitHub: [@0dh4m](https://github.com/0dh4m)
-- 📧 Email: 0dh4mm@gmail.com
+- ✉️ Email: 0dh4mm@gmail.com
+
+---
+
+## 📄 License
+
+Proprietary and confidential — see [LICENSE](LICENSE). Unauthorized copying or distribution is prohibited.
 
 *Copyright © 2026 Adham Cherkaoui Eddeqaqi (0dh4m). All rights reserved.*
